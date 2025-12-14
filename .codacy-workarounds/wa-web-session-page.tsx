@@ -1,0 +1,1 @@
+/Users/hikmettanriverdi/whatsapp-api-new/app/(dashboard)/dashboard/wa-web-session/page.tsx

@@ -1,0 +1,80 @@
+{
+  "tech_stack": [
+    "TypeScript",
+    "Next.js 14 (App Router)",
+    "React 18",
+    "Supabase (PostgreSQL, supabase-js)",
+    "Tailwind CSS + Radix UI (shadcn/ui) + Framer Motion",
+    "whatsapp-web.js + Puppeteer + qrcode",
+    "Zod",
+    "Zustand",
+    "PapaParse"
+  ],
+  "features": [
+    {
+      "name": "Auth - Login",
+      "description": "Admin kullanıcı ile giriş sayfası ve oturum açma akışı.",
+      "files": ["app/(auth)/login/page.tsx", "app/api/auth/login/route.ts"]
+    },
+    {
+      "name": "Dashboard",
+      "description": "Panel ana sayfa, istatistik/queue gösterimi ve navigasyon.",
+      "files": ["app/(dashboard)/dashboard/page.tsx", "components/layout/sidebar.tsx"]
+    },
+    {
+      "name": "WhatsApp Web Session - UI",
+      "description": "WA Web oturum ekranı: bağlan/reset/QR gösterimi, kişi/grup çekme, export.",
+      "files": ["app/(dashboard)/dashboard/wa-web-session/page.tsx"]
+    },
+    {
+      "name": "WhatsApp Web Session - Service",
+      "description": "whatsapp-web.js client yönetimi, QR üretimi, session lifecycle ve gönderim yardımcıları.",
+      "files": ["lib/wa-web-service.ts"]
+    },
+    {
+      "name": "WhatsApp Web Session - DB helpers",
+      "description": "Supabase üzerinden wa_web_sessions state/qr/status güncelleme ve reset/silme yardımcıları.",
+      "files": ["lib/db/wa-web-sessions.ts"]
+    },
+    {
+      "name": "WA Web Session - API routes",
+      "description": "connect/qr/status/logout/reset + contacts/groups/export endpoint'leri.",
+      "files": [
+        "app/api/wa-web/connect/route.ts",
+        "app/api/wa-web/qr/route.ts",
+        "app/api/wa-web/status/route.ts",
+        "app/api/wa-web/logout/route.ts",
+        "app/api/wa-web/reset/route.ts",
+        "app/api/wa-web/contacts/route.ts",
+        "app/api/wa-web/groups/route.ts",
+        "app/api/wa-web/export-contacts/route.ts"
+      ]
+    },
+    {
+      "name": "Campaigns - API",
+      "description": "Kampanya CRUD, preview, send/pause/resume ve rapor endpoint'leri.",
+      "files": [
+        "app/api/campaigns/route.ts",
+        "app/api/campaigns/[id]/route.ts",
+        "app/api/campaigns/[id]/preview/route.ts",
+        "app/api/campaigns/[id]/send/route.ts",
+        "app/api/campaigns/[id]/pause/route.ts",
+        "app/api/campaigns/[id]/resume/route.ts",
+        "app/api/campaigns/[id]/report/route.ts",
+        "lib/db/campaigns.ts"
+      ]
+    },
+    {
+      "name": "Contacts import - CSV only",
+      "description": "CSV dosyasından kişi içe aktarma ve şablon indirme.",
+      "files": ["components/contacts/csv-import.tsx", "lib/csv-parser.ts"]
+    },
+    {
+      "name": "Compliance & Ban-risk checks (MVP)",
+      "description": "STOP/blacklist, içerik kalite kontrolleri, hız profilleri.",
+      "files": ["lib/compliance-service.ts", "lib/db/blacklist.ts"]
+    }
+  ]
+}
+
+

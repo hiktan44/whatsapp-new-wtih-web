@@ -1,0 +1,18 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:3000",
+  "loginUser": "admin",
+  "loginPassword": "admin123",
+  "executionArgs": {
+    "projectName": "whatsapp-api-new",
+    "projectPath": "/Users/hikmettanriverdi/whatsapp-api-new",
+    "testIds": [],
+    "additionalInstruction": "- Uygulama http://localhost:3000 üzerinde çalışıyor.\n- Login akışında varsayılan admin hesabını kullanmayı dene: username=admin, password=admin123.\n- WA Web oturumu sayfasında QR tarama yapılamaz; sadece şu kontrolleri yap:\n  - Sayfa açılıyor mu?\n  - \"Oturumu Sıfırla\" butonu (connecting/qr_pending durumlarında) görünür mü?\n  - \"Bağlan\" / \"Bağlanmayı Yeniden Başlat\" butonları görünür mü?\n  - /api/wa-web/status endpointi 200 dönüyor mu?\n- Kampanyalar sayfası açılıyor mu? (liste yükleme / empty state)\n- Kişiler sayfasında CSV import dialog açılıyor mu ve .csv accept var mı?\n- Testler sırasında aşırı polling varsa stabilize etmek için bekleme sürelerini artırabilirsin.",
+    "envs": {
+      "API_KEY": "sk-user-NNNdITowLtL8-YGObB5iHaZQnF7CTopAiVfWmzytGijnD6aUbPfQqIhe75ej7LQO2BVRaMnAMWrMl_Jztmv4ZyqPubEAAkzIfyDlo5KcwKjz0g59KMPV5-AUNBGBYjIKk0g"
+    }
+  },
+  "proxy": "http://b2235cc7-9e7f-4b4b-81c7-823923bfaa9f:56D2mSvz8GJ1relmjKuP92LBgTGJk9JT@tun.testsprite.com:8080"
+}

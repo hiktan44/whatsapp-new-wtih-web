@@ -1,0 +1,433 @@
+[
+  {
+    "id": "TC001",
+    "title": "Admin Login Success with Valid Credentials",
+    "description": "Verify that admin can log in successfully with correct credentials and session is maintained securely.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the login page"
+      },
+      {
+        "type": "action",
+        "description": "Input valid admin username/email and password"
+      },
+      {
+        "type": "action",
+        "description": "Click the login button"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that login is successful and user is redirected to the dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify session is maintained securely (e.g. token stored properly, session expiration handled)"
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "Admin Login Failure with Invalid Credentials",
+    "description": "Verify that login fails with incorrect username or password and appropriate error message is displayed.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the login page"
+      },
+      {
+        "type": "action",
+        "description": "Input invalid username/email and/or password"
+      },
+      {
+        "type": "action",
+        "description": "Click the login button"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that login is rejected and error message for invalid credentials is shown"
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "WhatsApp Web Session QR Code Generation and Display",
+    "description": "Verify QR code is generated, displayed correctly, and updates dynamically for WhatsApp Web session connection.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the WhatsApp Web Session page"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that QR code is rendered and visible on the page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify QR code updates or refreshes if connection is lost or after timeout"
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "WhatsApp Web Session Connection Status Updates",
+    "description": "Verify connection status reflects current state accurately after scanning QR code, including connected, disconnected, and reconnecting states.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Scan QR code with WhatsApp mobile app to initiate connection"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that connection status changes to connected"
+      },
+      {
+        "type": "action",
+        "description": "Simulate dropped connection"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify connection status changes to disconnected or reconnecting as appropriate"
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Fetch and Export WhatsApp Contacts and Groups",
+    "description": "Verify admin can fetch contacts and groups from connected WhatsApp Web session and export them as CSV files correctly.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Connect WhatsApp Web session successfully"
+      },
+      {
+        "type": "action",
+        "description": "Trigger fetch contacts and groups actions"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify contacts and groups are displayed accurately in the UI"
+      },
+      {
+        "type": "action",
+        "description": "Choose export contacts and groups as CSV"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that CSV files download successfully with correct data format and content"
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Manual Addition and CSV Import of Contacts with Consent Validation",
+    "description": "Verify manual addition of contacts and bulk CSV import work correctly including phone number normalization and consent recording.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to contact management page"
+      },
+      {
+        "type": "action",
+        "description": "Manually add a contact with valid phone number and consent flag"
+      },
+      {
+        "type": "assertion",
+        "description": "Check the contact appears in the list with normalized phone number format and consent recorded"
+      },
+      {
+        "type": "action",
+        "description": "Upload a CSV file with multiple contacts containing varied phone number formats"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify all imported contacts are parsed correctly with normalized phone numbers and consent information handled"
+      },
+      {
+        "type": "assertion",
+        "description": "If CSV contains invalid formats or missing consent, check errors are reported clearly and import is gracefully handled"
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Create, Preview, and Manage Campaign with Personalized Templates and Media Attachments",
+    "description": "Verify campaign CRUD operations including creation with placeholders, media attachment up to 50MB, preview with personalized content, pause, resume, and delete.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to campaign creation page"
+      },
+      {
+        "type": "action",
+        "description": "Create a campaign selecting WhatsApp Web/Desktop channel, define a message template with placeholders and attach media file under 50MB"
+      },
+      {
+        "type": "action",
+        "description": "Preview the campaign to verify placeholders are replaced correctly with personalized data"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that preview renders text and media correctly without errors"
+      },
+      {
+        "type": "action",
+        "description": "Save and start sending campaign"
+      },
+      {
+        "type": "action",
+        "description": "Pause the campaign during sending"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the campaign pauses successfully and no further messages are sent"
+      },
+      {
+        "type": "action",
+        "description": "Resume the paused campaign sending"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that campaign resumes sending messages correctly"
+      },
+      {
+        "type": "action",
+        "description": "Delete the campaign"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm campaign is removed from the list without residual data"
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "Compliance and Ban-Risk Checks During Campaign Send",
+    "description": "Verify that message sending respects opt-in consent, filters blacklisted contacts, enforces rate limiting, and mitigates ban risks.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Create and initiate a campaign targeting contacts with mixed consent and blacklist status"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that messages are sent only to contacts with valid opt-in consent and not blacklisted"
+      },
+      {
+        "type": "assertion",
+        "description": "Monitor sending speed and verify that rate limiting profile is respected and sending speed does not exceed configured thresholds"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify ban-risk mitigation triggers (e.g. slowdowns or blocks) when limits are approached"
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Real-Time Message Queue and Campaign Reporting Accuracy",
+    "description": "Verify real-time queue tracking, message send success/failure, STOP requests handling, and accurate campaign performance reports.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Start sending a campaign"
+      },
+      {
+        "type": "assertion",
+        "description": "Check real-time message queue updates with current sending status"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify message send success and failure are reported correctly in the UI"
+      },
+      {
+        "type": "action",
+        "description": "Simulate STOP requests from recipients or delivery failures"
+      },
+      {
+        "type": "assertion",
+        "description": "Ensure STOP requests and failures are captured accurately in campaign report"
+      },
+      {
+        "type": "action",
+        "description": "Access detailed campaign report page"
+      },
+      {
+        "type": "assertion",
+        "description": "Validate completeness and accuracy of message delivery statistics and recipient feedback"
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "Group Management: Create Group, Add/Remove Contacts, and View Statistics",
+    "description": "Verify creating groups, multi-selection addition/removal of contacts, and proper display of group statistics.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to group management page"
+      },
+      {
+        "type": "action",
+        "description": "Create a new group with a unique name"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify group is created and visible in the group list"
+      },
+      {
+        "type": "action",
+        "description": "Select multiple contacts and add them to the group"
+      },
+      {
+        "type": "assertion",
+        "description": "Check contacts are added correctly to the group"
+      },
+      {
+        "type": "action",
+        "description": "Remove some contacts from the group using multi-selection"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify contacts are removed successfully"
+      },
+      {
+        "type": "assertion",
+        "description": "Check group statistics display correct numbers of members"
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "UI Responsiveness and Theme Support",
+    "description": "Verify the UI responds correctly across different device screen sizes and toggles smoothly between dark and light themes.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open the application on desktop, tablet, and mobile screen sizes"
+      },
+      {
+        "type": "assertion",
+        "description": "Check all UI elements adjust layout appropriately for each device size"
+      },
+      {
+        "type": "action",
+        "description": "Toggle between dark mode and light mode themes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify theme changes apply smoothly and UI elements remain readable and correctly styled"
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "Error Handling for QR Code Not Showing and Lost WhatsApp Web Connection",
+    "description": "Verify that error states such as QR code failure to display or lost WhatsApp Web client connection are detected and user-friendly error messages are shown.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Simulate failure to generate or display QR code on WhatsApp Web Session page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify appropriate error message is shown indicating QR code display problem"
+      },
+      {
+        "type": "action",
+        "description": "Simulate lost connection to WhatsApp Web client after session established"
+      },
+      {
+        "type": "assertion",
+        "description": "Check reconnection attempts are made and error/informational messages are shown to the user"
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Validate Rate Limiting Enforcement During Bulk Messaging",
+    "description": "Confirm that rate limiting profiles are enforced during bulk message sending to prevent excessive sending speeds.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Create a bulk message campaign with a specific rate limiting profile"
+      },
+      {
+        "type": "action",
+        "description": "Start sending the campaign"
+      },
+      {
+        "type": "assertion",
+        "description": "Monitor outgoing message rate and verify it does not exceed the configured limits"
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "CSV Import Robustness with Malformed Data and Error Reporting",
+    "description": "Verify CSV import handles malformed data gracefully and reports errors clearly without crashing or corrupting data.",
+    "category": "error handling",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Upload a CSV file containing invalid phone numbers, missing required fields, and corrupt rows"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that errors are caught, relevant messages are displayed to the user, and valid rows are still imported"
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "Logout and Session Reset Functionality",
+    "description": "Verify that admin can log out successfully and WhatsApp Web session can be reset properly with all relevant application states cleared.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Click logout button from the dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify user is logged out and redirected to the login page"
+      },
+      {
+        "type": "action",
+        "description": "Initiate WhatsApp Web session reset from session management page"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm session is reset, QR code is regenerated, and previous session data is cleared"
+      }
+    ]
+  }
+]
