@@ -471,3 +471,84 @@ export async function getGroups(): Promise<any[]> {
     return [];
   }
 }
+
+/**
+ * Belirli bir grubun üyelerini getir
+ */
+export async function getGroupParticipants(groupId: string): Promise<any[]> {
+  if (!global.waClient || !global.waIsReady) {
+    return [];
+  }
+
+  try {
+    const chat = await global.waClient.getChatById(groupId);
+    
+    if (!chat.isGroup) {
+      return [];
+    }
+
+    const participants = chat.participants || [];
+    
+    // Her katılımcı için detaylı bilgi al
+    const participantDetails = await Promise.all(
+      participants.map(async (participant: any) => {
+        try {
+          const contact = await global.waClient.getContactById(participant.id._serialized);
+          return {
+            id: participant.id._serialized,
+            phone: participant.id.user,
+            name: contact.name || contact.pushname || participant.id.user,
+            isAdmin: participant.isAdmin || false,
+            isSuperAdmin: participant.isSuperAdmin || false
+          };
+        } catch (error) {
+          console.error('[WA] Katılımcı bilgisi alınamadı:', participant.id._serialized);
+          return {
+            id: participant.id._serialized,
+            phone: participant.id.user,
+            name: participant.id.user,
+            isAdmin: false,
+            isSuperAdmin: false
+          };
+        }
+      })
+    );
+
+    return participantDetails;
+  } catch (error) {
+    console.error('[WA] Grup üyeleri alınamadı:', error);
+    return [];
+  }
+}
+
+/**
+ * Tüm grupları üyeleriyle birlikte getir
+ */
+export async function getGroupsWithParticipants(): Promise<any[]> {
+  if (!global.waClient || !global.waIsReady) {
+    return [];
+  }
+
+  try {
+    const chats = await global.waClient.getChats();
+    const groups = chats.filter((c: any) => c.isGroup);
+
+    const groupsWithParticipants = await Promise.all(
+      groups.map(async (group: any) => {
+        const participants = await getGroupParticipants(group.id._serialized);
+        
+        return {
+          id: group.id._serialized,
+          name: group.name,
+          participantCount: participants.length,
+          participants: participants
+        };
+      })
+    );
+
+    return groupsWithParticipants;
+  } catch (error) {
+    console.error('[WA] Gruplar ve üyeler alınamadı:', error);
+    return [];
+  }
+}

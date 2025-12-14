@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/use-toast'
-import { Smartphone, QrCode, CheckCircle2, XCircle, Loader2, Send } from 'lucide-react'
+import { Smartphone, QrCode, CheckCircle2, XCircle, Loader2, Send, Users, UsersRound, Download } from 'lucide-react'
 
 export default function WaWebSessionPage() {
   const { toast } = useToast()
@@ -12,6 +12,7 @@ export default function WaWebSessionPage() {
   const [phone, setPhone] = useState<string | null>(null)
   const [qrCode, setQrCode] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [syncing, setSyncing] = useState(false)
   const [testPhone, setTestPhone] = useState('')
   const [testMessage, setTestMessage] = useState('Merhaba, bu bir test mesajıdır.')
   const [testMediaUrl, setTestMediaUrl] = useState('')
@@ -107,6 +108,50 @@ export default function WaWebSessionPage() {
       toast({ title: 'Hata', description: error.message, variant: 'destructive' })
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Kişileri senkronize et
+  const handleSyncContacts = async () => {
+    setSyncing(true)
+    try {
+      const res = await fetch('/api/wa-web/sync-contacts', { method: 'POST' })
+      const data = await res.json()
+
+      if (data.success) {
+        toast({ 
+          title: 'Başarılı!', 
+          description: `${data.stats.added} yeni kişi eklendi, ${data.stats.updated} kişi güncellendi.` 
+        })
+      } else {
+        toast({ title: 'Hata', description: data.error, variant: 'destructive' })
+      }
+    } catch (error: any) {
+      toast({ title: 'Hata', description: error.message, variant: 'destructive' })
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  // Grupları senkronize et
+  const handleSyncGroups = async () => {
+    setSyncing(true)
+    try {
+      const res = await fetch('/api/wa-web/sync-groups', { method: 'POST' })
+      const data = await res.json()
+
+      if (data.success) {
+        toast({ 
+          title: 'Başarılı!', 
+          description: `${data.stats.addedGroups} grup, ${data.stats.addedContacts} yeni kişi, ${data.stats.addedGroupMembers} grup üyesi eklendi.` 
+        })
+      } else {
+        toast({ title: 'Hata', description: data.error, variant: 'destructive' })
+      }
+    } catch (error: any) {
+      toast({ title: 'Hata', description: error.message, variant: 'destructive' })
+    } finally {
+      setSyncing(false)
     }
   }
 
@@ -247,6 +292,99 @@ export default function WaWebSessionPage() {
               )}
               {testMediaUrl ? 'Medya ile Gönder' : 'Mesaj Gönder'}
             </Button>
+          </div>
+        </Card>
+      )}
+
+      {/* Senkronizasyon Kartı - Sadece bağlıyken göster */}
+      {connected && (
+        <Card className="p-6 bg-gradient-to-br from-blue-50 to-green-50 dark:from-blue-950/20 dark:to-green-950/20">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+              <Download className="w-6 h-6 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg">WhatsApp&apos;tan Çek</h3>
+              <p className="text-sm text-muted-foreground">
+                Kişileri ve grupları WhatsApp&apos;tan otomatik olarak çekin
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Kişileri Çek */}
+            <div className="bg-white dark:bg-gray-900 p-4 rounded-lg border shadow-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <Users className="w-5 h-5 text-blue-600" />
+                <h4 className="font-semibold">Kişileri Çek</h4>
+              </div>
+              <p className="text-xs text-muted-foreground mb-4">
+                WhatsApp&apos;taki tüm kişilerinizi sisteme aktarın. Mevcut kişiler güncellenecektir.
+              </p>
+              <Button
+                onClick={handleSyncContacts}
+                disabled={syncing}
+                className="w-full"
+                variant="outline"
+              >
+                {syncing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Çekiliyor...
+                  </>
+                ) : (
+                  <>
+                    <Users className="w-4 h-4 mr-2" />
+                    Kişileri Çek
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* Grupları Çek */}
+            <div className="bg-white dark:bg-gray-900 p-4 rounded-lg border shadow-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <UsersRound className="w-5 h-5 text-green-600" />
+                <h4 className="font-semibold">Grupları Çek</h4>
+              </div>
+              <p className="text-xs text-muted-foreground mb-4">
+                WhatsApp gruplarını ve üyelerini çekin. Grup üyeleri otomatik olarak kişilere eklenecektir.
+              </p>
+              <Button
+                onClick={handleSyncGroups}
+                disabled={syncing}
+                className="w-full"
+                variant="outline"
+              >
+                {syncing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Çekiliyor...
+                  </>
+                ) : (
+                  <>
+                    <UsersRound className="w-4 h-4 mr-2" />
+                    Grupları ve Üyeleri Çek
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {/* Bilgilendirme */}
+          <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+            <div className="flex items-start gap-2">
+              <span className="text-lg">ℹ️</span>
+              <div className="text-xs text-yellow-800 dark:text-yellow-200">
+                <p className="font-semibold mb-1">Nasıl Çalışır?</p>
+                <ul className="list-disc list-inside space-y-1">
+                  <li><strong>Kişileri Çek:</strong> WhatsApp&apos;taki tüm kayıtlı kişilerinizi getirir</li>
+                  <li><strong>Grupları Çek:</strong> Tüm grupları ve grup üyelerini getirir</li>
+                  <li><strong>Otomatik Ekleme:</strong> Grup üyesi sistemde yoksa, önce kişi olarak eklenir, sonra gruba dahil edilir</li>
+                  <li><strong>Güvenli:</strong> Mevcut verileriniz korunur, sadece yeniler eklenir veya güncellenecektir</li>
+                </ul>
+              </div>
+            </div>
           </div>
         </Card>
       )}
