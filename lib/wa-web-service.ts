@@ -8,6 +8,9 @@ declare global {
   var waIsReady: boolean;
   var waQrCode: string | null;
   var waInitializing: boolean;
+  var waLastQR: string | null;
+  var waConnectedPhone: string | null;
+  var waSessions: Map<string, any>;
 }
 
 // whatsapp-web.js dynamic import
