@@ -12,7 +12,6 @@ import {
   Clock,
   History,
   Settings,
-  LogOut,
   Menu,
   X,
   Smartphone,
@@ -20,7 +19,6 @@ import {
   BarChart3,
 } from 'lucide-react'
 import { useState } from 'react'
-import { useToast } from '@/components/ui/use-toast'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const menuItems = [
@@ -40,26 +38,7 @@ const menuItems = [
 
 export function Sidebar() {
   const pathname = usePathname()
-  const router = useRouter()
-  const { toast } = useToast()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' })
-      toast({
-        title: 'Çıkış yapıldı',
-        description: 'Başarıyla çıkış yaptınız.',
-      })
-      router.push('/login')
-    } catch (error) {
-      toast({
-        title: 'Hata',
-        description: 'Çıkış yapılırken bir hata oluştu.',
-        variant: 'destructive',
-      })
-    }
-  }
 
   return (
     <>
@@ -146,17 +125,7 @@ export function Sidebar() {
             })}
           </nav>
 
-          {/* Logout Button */}
-          <div className="p-4 border-t border-border">
-            <Button
-              onClick={handleLogout}
-              variant="ghost"
-              className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-            >
-              <LogOut size={20} className="mr-3" />
-              Çıkış Yap
-            </Button>
-          </div>
+          {/* Login kaldırıldı: Çıkış butonu kaldırıldı */}
         </div>
       </aside>
     </>
