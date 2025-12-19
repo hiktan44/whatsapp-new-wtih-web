@@ -21,6 +21,10 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Repo'da public/ klasörü yoksa sonraki stage'deki COPY patlıyor.
+# Bu yüzden public dizinini her zaman oluşturuyoruz (boş olabilir).
+RUN mkdir -p /app/public
+
 # Build arguments for environment variables
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
