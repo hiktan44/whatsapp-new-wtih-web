@@ -2,6 +2,15 @@ import QRCode from 'qrcode';
 import * as fs from 'fs';
 import * as path from 'path';
 
+// Session state interface
+interface SessionState {
+  client: any;
+  isReady: boolean;
+  lastQR: string | null;
+  connectedPhone: string | null;
+  sessionName: string;
+}
+
 // Global type definitions for WhatsApp Web
 declare global {
   var waClient: any;
@@ -10,7 +19,7 @@ declare global {
   var waInitializing: boolean;
   var waLastQR: string | null;
   var waConnectedPhone: string | null;
-  var waSessions: Map<string, any>;
+  var waSessions: Map<string, SessionState>;
 }
 
 // whatsapp-web.js dynamic import
@@ -235,19 +244,7 @@ function cleanupIndexedDBCache(): void {
   }
 }
 
-// Session state interface
-interface SessionState {
-  client: any;
-  isReady: boolean;
-  lastQR: string | null;
-  connectedPhone: string | null;
-  sessionName: string;
-}
-
 // Global state (Next.js module re-import sorununu çözmek için)
-declare global {
-  var waSessions: Map<string, SessionState>;
-}
 
 // Initialize globals - Çoklu session desteği
 if (typeof global.waSessions === 'undefined') {
