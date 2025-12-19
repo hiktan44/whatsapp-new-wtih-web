@@ -42,6 +42,9 @@ export interface MessageHistory {
   media_type?: 'image' | 'video' | 'document' | 'audio';
   media_filename?: string;
   status: string;
+  channel?: string;
+  campaign_id?: string;
+  error?: string;
   sent_at: string;
 }
 
