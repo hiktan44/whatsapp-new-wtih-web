@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
     if (success) {
       // status "1" string olarak geliyor
-      const isActive = statusData.status === "1" || statusData.status === 1;
+      const isActive = String(statusData.status) === "1";
       return NextResponse.json({
         success: true,
         status: statusData.status,

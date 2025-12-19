@@ -367,7 +367,7 @@ export function TemplateForm({ open, onOpenChange, template, onSuccess }: Templa
               <Label className="text-base font-semibold">Call-to-Action Link (Opsiyonel)</Label>
             </div>
             <p className="text-xs text-muted-foreground">
-              Mesajın sonuna otomatik olarak eklenecek link. WhatsApp'ta link önizlemesi gösterilecektir.
+              Mesajın sonuna otomatik olarak eklenecek link. WhatsApp&apos;ta link önizlemesi gösterilecektir.
             </p>
             
             <div className="space-y-2">

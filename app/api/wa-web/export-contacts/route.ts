@@ -4,14 +4,14 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const { getWaWebContacts } = await import('@/lib/wa-web-service');
+    const { getContacts } = await import('@/lib/wa-web-service');
 
-    const contacts = await getWaWebContacts();
+    const contacts = await getContacts();
 
     // CSV formatına dönüştür
-    const csvHeader = 'İsim,Numara,Kayıtlı Kişi\n';
-    const csvRows = contacts.map(c => 
-      `"${c.name}","${c.number}","${c.isMyContact ? 'Evet' : 'Hayır'}"`
+    const csvHeader = 'İsim,Numara\n';
+    const csvRows = contacts.map((c: any) => 
+      `"${c.name || ''}","${c.phone || ''}"`
     ).join('\n');
 
     const csv = csvHeader + csvRows;

@@ -1,0 +1,43 @@
+services:
+  whatsapp-panel:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+        - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+    container_name: whatsapp-yoncu-panel
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=production
+      - DOCKER=true
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - YONCU_API_BASE_URL=${YONCU_API_BASE_URL:-https://www.yoncu.com}
+      - PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+      - PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+      - WA_WEB_HEADLESS=1
+    volumes:
+      # WhatsApp Web session dosyalarını kalıcı hale getir
+      - wa-web-sessions:/app/.wwebjs_auth
+      - wa-web-cache:/app/.wwebjs_cache
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - whatsapp-network
+
+volumes:
+  wa-web-sessions:
+    driver: local
+  wa-web-cache:
+    driver: local
+
+networks:
+  whatsapp-network:
+    driver: bridge

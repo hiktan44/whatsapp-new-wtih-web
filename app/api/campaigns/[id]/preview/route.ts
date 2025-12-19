@@ -46,8 +46,8 @@ export async function POST(
       for (const groupId of campaign.target_groups) {
         const group = await getGroupById(groupId);
         if (group) {
-          const { data: groupContacts } = await import('@/lib/db/groups').then(m => m.getGroupContacts(groupId));
-          if (groupContacts) recipients.push(...groupContacts);
+          const groupContacts = await import('@/lib/db/groups').then(m => m.getGroupContacts(groupId));
+          if (groupContacts && groupContacts.length > 0) recipients.push(...groupContacts);
         }
       }
     } else if (campaign.target_type === 'manual' && campaign.target_manual_phones) {

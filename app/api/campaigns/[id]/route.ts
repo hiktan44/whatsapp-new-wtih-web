@@ -4,10 +4,11 @@ import { getCampaignById, updateCampaign, deleteCampaign } from '@/lib/db/campai
 // GET: Kampanyayı ID ile getir
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
-    const campaign = await getCampaignById(params.id);
+    const { id } = params instanceof Promise ? await params : params;
+    const campaign = await getCampaignById(id);
 
     if (!campaign) {
       return NextResponse.json(
@@ -29,11 +30,12 @@ export async function GET(
 // PATCH: Kampanya güncelle
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
+    const { id } = params instanceof Promise ? await params : params;
     const body = await request.json();
-    const campaign = await updateCampaign(params.id, body);
+    const campaign = await updateCampaign(id, body);
 
     return NextResponse.json({
       success: true,
@@ -52,10 +54,11 @@ export async function PATCH(
 // DELETE: Kampanya sil
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
-    await deleteCampaign(params.id);
+    const { id } = params instanceof Promise ? await params : params;
+    await deleteCampaign(id);
 
     return NextResponse.json({
       success: true,

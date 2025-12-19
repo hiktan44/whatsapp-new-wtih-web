@@ -4,9 +4,9 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const { getWaWebContacts } = await import('@/lib/wa-web-service');
+    const { getContacts } = await import('@/lib/wa-web-service');
 
-    const contacts = await getWaWebContacts();
+    const contacts = await getContacts();
 
     return NextResponse.json({
       success: true,

@@ -31,22 +31,32 @@ export default function CampaignReportPage() {
   const fetchReport = async () => {
     setLoading(true)
     try {
+      console.log('[Frontend] Rapor alınıyor, campaignId:', campaignId)
       const res = await fetch(`/api/campaigns/${campaignId}/report`)
+      
+      if (!res.ok) {
+        const errorText = await res.text()
+        console.error('[Frontend] Rapor API hatası:', res.status, errorText)
+        throw new Error(`Rapor alınamadı: ${res.status} ${res.statusText}`)
+      }
+      
       const data = await res.json()
+      console.log('[Frontend] Rapor verisi alındı:', data)
 
       if (data.success) {
         setReport(data.report)
       } else {
         toast({
           title: 'Hata',
-          description: data.error,
+          description: data.error || 'Rapor alınamadı',
           variant: 'destructive'
         })
       }
     } catch (error: any) {
+      console.error('[Frontend] Rapor hatası:', error)
       toast({
         title: 'Hata',
-        description: error.message,
+        description: error.message || 'Rapor yüklenirken bir hata oluştu',
         variant: 'destructive'
       })
     } finally {

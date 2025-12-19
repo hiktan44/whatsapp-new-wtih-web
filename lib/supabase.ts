@@ -1,9 +1,12 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-export const supabase = createClient(supabaseUrl, supabaseKey)
+export const supabase = createSupabaseClient(supabaseUrl, supabaseKey)
+
+// Export createClient for server-side usage
+export const createClient = () => createSupabaseClient(supabaseUrl, supabaseKey)
 
 // Database şeması için yardımcı fonksiyonlar
 export const dbSchema = `

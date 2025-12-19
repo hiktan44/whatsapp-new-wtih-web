@@ -10,7 +10,7 @@ export async function POST() {
     await logoutWaWeb();
 
     // Database'i güncelle
-    await updateSessionStatus('default', 'disconnected', null);
+    await updateSessionStatus('default', 'disconnected', undefined);
 
     return NextResponse.json({
       success: true,

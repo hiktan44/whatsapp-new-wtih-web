@@ -11,12 +11,23 @@ export async function POST(request: Request) {
     console.log('[API] WhatsApp kişileri senkronize ediliyor...');
     
     const { getContacts } = await import('@/lib/wa-web-service');
-    const waContacts = await getContacts();
+    
+    let waContacts: any[] = [];
+    try {
+      waContacts = await getContacts();
+      console.log(`[API] ${waContacts.length} kişi WhatsApp'tan alındı`);
+    } catch (error: any) {
+      console.error('[API] WhatsApp kişileri alınamadı:', error);
+      return NextResponse.json({
+        success: false,
+        error: error.message || 'WhatsApp\'tan kişi alınamadı. Bağlantınızı kontrol edin.'
+      }, { status: 400 });
+    }
 
     if (waContacts.length === 0) {
       return NextResponse.json({
         success: false,
-        error: 'WhatsApp\'tan kişi alınamadı. Bağlantınızı kontrol edin.'
+        error: 'WhatsApp\'tan kişi bulunamadı. WhatsApp\'ta kayıtlı kişileriniz olduğundan emin olun.'
       }, { status: 400 });
     }
 

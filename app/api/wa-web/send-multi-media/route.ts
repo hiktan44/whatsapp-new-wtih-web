@@ -33,10 +33,20 @@ export async function POST(request: Request) {
       finalMessage += linkMessage;
     }
 
-    const { sendMessage, sendMessageWithMultipleMedia } = await import('@/lib/wa-web-service');
+    const { sendMessage, sendMessageWithMultipleMedia, getStatus } = await import('@/lib/wa-web-service');
+    
+    // Önce bağlantı durumunu kontrol et
+    const status = await getStatus();
+    if (!status.connected) {
+      return NextResponse.json(
+        { success: false, error: 'WhatsApp bağlı değil. Lütfen önce bağlantı kurun.' },
+        { status: 400 }
+      );
+    }
     
     // Çoklu medya var mı?
     if (mediaItems && mediaItems.length > 0) {
+      console.log('[API] Çoklu medya gönderiliyor:', mediaItems.length, 'medya');
       const result = await sendMessageWithMultipleMedia(
         phone,
         finalMessage,
@@ -50,13 +60,15 @@ export async function POST(request: Request) {
           messageIds: result.messageIds 
         });
       } else {
+        console.error('[API] Çoklu medya gönderme hatası:', result.error);
         return NextResponse.json(
-          { success: false, error: result.error },
+          { success: false, error: result.error || 'Mesaj gönderilemedi' },
           { status: 500 }
         );
       }
     } else {
       // Sadece metin mesajı
+      console.log('[API] Metin mesajı gönderiliyor');
       const result = await sendMessage(phone, finalMessage);
 
       if (result.success) {
@@ -66,8 +78,9 @@ export async function POST(request: Request) {
           messageId: result.messageId 
         });
       } else {
+        console.error('[API] Mesaj gönderme hatası:', result.error);
         return NextResponse.json(
-          { success: false, error: result.error },
+          { success: false, error: result.error || 'Mesaj gönderilemedi' },
           { status: 500 }
         );
       }

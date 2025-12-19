@@ -11,12 +11,23 @@ export async function POST(request: Request) {
     console.log('[API] WhatsApp grupları senkronize ediliyor...');
     
     const { getGroupsWithParticipants } = await import('@/lib/wa-web-service');
-    const waGroups = await getGroupsWithParticipants();
+    
+    let waGroups: any[] = [];
+    try {
+      waGroups = await getGroupsWithParticipants();
+      console.log(`[API] ${waGroups.length} grup WhatsApp'tan alındı`);
+    } catch (error: any) {
+      console.error('[API] WhatsApp grupları alınamadı:', error);
+      return NextResponse.json({
+        success: false,
+        error: error.message || 'WhatsApp\'tan grup alınamadı. Bağlantınızı kontrol edin.'
+      }, { status: 400 });
+    }
 
     if (waGroups.length === 0) {
       return NextResponse.json({
         success: false,
-        error: 'WhatsApp\'tan grup alınamadı. Bağlantınızı kontrol edin.'
+        error: 'WhatsApp\'tan grup bulunamadı. WhatsApp\'ta grup olduğundan emin olun.'
       }, { status: 400 });
     }
 

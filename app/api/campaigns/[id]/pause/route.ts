@@ -4,10 +4,11 @@ import { getCampaignById, updateCampaign } from '@/lib/db/campaigns';
 // POST: Kampanyayı duraklat
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
-    const campaign = await getCampaignById(params.id);
+    const { id } = params instanceof Promise ? await params : params;
+    const campaign = await getCampaignById(id);
 
     if (!campaign) {
       return NextResponse.json(
@@ -23,7 +24,7 @@ export async function POST(
       );
     }
 
-    await updateCampaign(params.id, { status: 'paused' });
+    await updateCampaign(id, { status: 'paused' });
 
     return NextResponse.json({
       success: true,

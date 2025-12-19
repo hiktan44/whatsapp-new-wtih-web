@@ -32,6 +32,7 @@ const menuItems = [
   { href: '/dashboard/kuyruk', label: 'Kuyruk', icon: Clock },
   { href: '/dashboard/gecmis', label: 'Geçmiş', icon: History },
   { href: '/dashboard/wa-web-session', label: 'WA Web Oturumu', icon: Smartphone },
+  { href: '/dashboard/coklu-session', label: 'Çoklu WhatsApp', icon: Smartphone, badge: 'YENİ' },
   { href: '/dashboard/campaigns', label: 'Kampanyalar', icon: Zap },
   { href: '/dashboard/reports', label: 'Raporlar', icon: BarChart3 },
   { href: '/dashboard/ayarlar', label: 'Ayarlar', icon: Settings },
@@ -135,6 +136,11 @@ export function Sidebar() {
                 >
                   <Icon size={20} />
                   <span className="font-medium">{item.label}</span>
+                  {(item as any).badge && (
+                    <span className="ml-auto text-xs px-2 py-0.5 bg-green-500 text-white rounded-full">
+                      {(item as any).badge}
+                    </span>
+                  )}
                 </Link>
               )
             })}

@@ -29,19 +29,57 @@ export default function WaWebSessionPage() {
         setPhone(data.phone)
         
         if (data.qrCode) {
-          setQrCode(data.qrCode)
+          // QR kod zaten varsa tekrar set etme (gereksiz re-render önleme)
+          if (qrCode !== data.qrCode) {
+            setQrCode(data.qrCode)
+            console.log('[Frontend] QR kod alındı')
+          }
         } else if (data.connected) {
           setQrCode(null)
+          console.log('[Frontend] Bağlantı kuruldu!')
         }
 
         // Bağlandıysa polling'i durdur
         if (data.connected && pollRef.current) {
           clearInterval(pollRef.current)
           pollRef.current = null
+          toast({ 
+            title: 'Bağlantı Kuruldu!', 
+            description: `WhatsApp bağlantısı başarıyla kuruldu. Telefon: ${data.phone ? '+' + data.phone : 'Bilinmiyor'}` 
+          })
         }
+      } else {
+        console.error('[Frontend] Status API hatası:', data.error)
       }
     } catch (error) {
-      console.error('Status hatası:', error)
+      console.error('[Frontend] Status hatası:', error)
+    }
+  }
+
+  // Temizle ve yeniden bağlan
+  const handleCleanupAndConnect = async () => {
+    setLoading(true)
+    setQrCode(null)
+    setConnected(false)
+
+    try {
+      // Önce logout yap (temizlik için)
+      console.log('[Frontend] Temizlik yapılıyor...')
+      try {
+        await fetch('/api/wa-web/logout', { method: 'POST' })
+      } catch (e) {
+        // Logout hatası önemli değil
+      }
+
+      // 1 saniye bekle (temizlik için)
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
+      // Sonra bağlan
+      await handleConnect()
+    } catch (error: any) {
+      toast({ title: 'Hata', description: error.message || 'Temizlik yapılamadı', variant: 'destructive' })
+      console.error('[Frontend] Temizlik hatası:', error)
+      setLoading(false)
     }
   }
 
@@ -49,31 +87,83 @@ export default function WaWebSessionPage() {
   const handleConnect = async () => {
     setLoading(true)
     setQrCode(null)
+    setConnected(false)
 
     try {
+      console.log('[Frontend] Bağlantı isteği gönderiliyor...')
       const res = await fetch('/api/wa-web/connect', { method: 'POST' })
       const data = await res.json()
 
       if (data.success) {
         toast({ title: 'Bağlantı başlatıldı', description: 'QR kodu bekleniyor...' })
+        console.log('[Frontend] Bağlantı başlatıldı, QR kod bekleniyor...')
 
-        // Polling başlat
+        // Hemen bir kez kontrol et (500ms sonra)
+        setTimeout(() => {
+          checkStatus()
+        }, 500)
+
+        // Polling başlat (2 saniye aralıkla - QR kod görününce daha yavaş)
         if (pollRef.current) clearInterval(pollRef.current)
-        pollRef.current = setInterval(checkStatus, 1500)
+        pollRef.current = setInterval(checkStatus, 2000)
 
         // 3 dakika sonra polling'i durdur
         setTimeout(() => {
           if (pollRef.current && !connected) {
             clearInterval(pollRef.current)
             pollRef.current = null
-            toast({ title: 'Zaman aşımı', description: 'Bağlantı kurulamadı', variant: 'destructive' })
+            toast({ title: 'Zaman aşımı', description: 'Bağlantı kurulamadı. Lütfen tekrar deneyin.', variant: 'destructive' })
           }
         }, 180000)
       } else {
-        toast({ title: 'Hata', description: data.error, variant: 'destructive' })
+        const errorMsg = data.error || 'Bağlantı kurulamadı';
+        
+        // Özel hata mesajları
+        if (errorMsg.includes('IndexedDB') || errorMsg.includes('backing store')) {
+          toast({ 
+            title: 'IndexedDB Hatası', 
+            description: 'Chrome veri deposu hatası. Lütfen "Temizle ve Yeniden Bağlan" butonunu kullanın.', 
+            variant: 'destructive' 
+          });
+        } else if (errorMsg.includes('Protocol error') || errorMsg.includes('Execution context was destroyed')) {
+          toast({ 
+            title: 'Chrome Bağlantı Hatası', 
+            description: 'Chrome başlatılamadı. Lütfen "Temizle ve Yeniden Bağlan" butonunu kullanın. Chrome penceresini kapatıp tekrar deneyin.', 
+            variant: 'destructive' 
+          });
+        } else if (errorMsg.includes('Chrome bulunamadı')) {
+          toast({ 
+            title: 'Chrome Bulunamadı', 
+            description: 'Google Chrome yüklü değil veya bulunamıyor. Lütfen Chrome\'u yükleyin.', 
+            variant: 'destructive' 
+          });
+        } else {
+          toast({ title: 'Hata', description: errorMsg, variant: 'destructive' });
+        }
+        
+        console.error('[Frontend] Bağlantı hatası:', data.error);
       }
     } catch (error: any) {
-      toast({ title: 'Hata', description: error.message, variant: 'destructive' })
+      const errorMsg = error.message || 'Bağlantı kurulamadı';
+      
+      // Özel hata mesajları
+      if (errorMsg.includes('IndexedDB') || errorMsg.includes('backing store')) {
+        toast({ 
+          title: 'IndexedDB Hatası', 
+          description: 'Chrome veri deposu hatası. Lütfen "Temizle ve Yeniden Bağlan" butonunu kullanın.', 
+          variant: 'destructive' 
+        });
+      } else if (errorMsg.includes('Protocol error') || errorMsg.includes('Execution context was destroyed')) {
+        toast({ 
+          title: 'Chrome Bağlantı Hatası', 
+          description: 'Chrome başlatılamadı. Lütfen "Temizle ve Yeniden Bağlan" butonunu kullanın.', 
+          variant: 'destructive' 
+        });
+      } else {
+        toast({ title: 'Hata', description: errorMsg, variant: 'destructive' });
+      }
+      
+      console.error('[Frontend] Bağlantı exception:', error);
     } finally {
       setLoading(false)
     }
@@ -113,21 +203,42 @@ export default function WaWebSessionPage() {
 
   // Kişileri senkronize et
   const handleSyncContacts = async () => {
+    if (!connected) {
+      toast({ 
+        title: 'Hata', 
+        description: 'WhatsApp bağlı değil. Lütfen önce bağlantı kurun.', 
+        variant: 'destructive' 
+      })
+      return
+    }
+
     setSyncing(true)
     try {
+      console.log('[Frontend] Kişiler çekiliyor...')
       const res = await fetch('/api/wa-web/sync-contacts', { method: 'POST' })
       const data = await res.json()
 
       if (data.success) {
         toast({ 
           title: 'Başarılı!', 
-          description: `${data.stats.added} yeni kişi eklendi, ${data.stats.updated} kişi güncellendi.` 
+          description: `${data.stats.added} yeni kişi eklendi, ${data.stats.updated} kişi güncellendi. Toplam: ${data.stats.total} kişi işlendi.` 
         })
+        console.log('[Frontend] Kişiler başarıyla çekildi:', data.stats)
       } else {
-        toast({ title: 'Hata', description: data.error, variant: 'destructive' })
+        console.error('[Frontend] Kişiler çekme hatası:', data.error)
+        toast({ 
+          title: 'Hata', 
+          description: data.error || 'Kişiler çekilemedi', 
+          variant: 'destructive' 
+        })
       }
     } catch (error: any) {
-      toast({ title: 'Hata', description: error.message, variant: 'destructive' })
+      console.error('[Frontend] Kişiler çekme hatası:', error)
+      toast({ 
+        title: 'Hata', 
+        description: error.message || 'Kişiler çekilirken bir hata oluştu', 
+        variant: 'destructive' 
+      })
     } finally {
       setSyncing(false)
     }
@@ -135,21 +246,42 @@ export default function WaWebSessionPage() {
 
   // Grupları senkronize et
   const handleSyncGroups = async () => {
+    if (!connected) {
+      toast({ 
+        title: 'Hata', 
+        description: 'WhatsApp bağlı değil. Lütfen önce bağlantı kurun.', 
+        variant: 'destructive' 
+      })
+      return
+    }
+
     setSyncing(true)
     try {
+      console.log('[Frontend] Gruplar çekiliyor...')
       const res = await fetch('/api/wa-web/sync-groups', { method: 'POST' })
       const data = await res.json()
 
       if (data.success) {
         toast({ 
           title: 'Başarılı!', 
-          description: `${data.stats.addedGroups} grup, ${data.stats.addedContacts} yeni kişi, ${data.stats.addedGroupMembers} grup üyesi eklendi.` 
+          description: `${data.stats.addedGroups} yeni grup, ${data.stats.updatedGroups} grup güncellendi, ${data.stats.addedContacts} yeni kişi, ${data.stats.addedGroupMembers} grup üyesi eklendi. Toplam: ${data.stats.totalGroups} grup işlendi.` 
         })
+        console.log('[Frontend] Gruplar başarıyla çekildi:', data.stats)
       } else {
-        toast({ title: 'Hata', description: data.error, variant: 'destructive' })
+        console.error('[Frontend] Gruplar çekme hatası:', data.error)
+        toast({ 
+          title: 'Hata', 
+          description: data.error || 'Gruplar çekilemedi', 
+          variant: 'destructive' 
+        })
       }
     } catch (error: any) {
-      toast({ title: 'Hata', description: error.message, variant: 'destructive' })
+      console.error('[Frontend] Gruplar çekme hatası:', error)
+      toast({ 
+        title: 'Hata', 
+        description: error.message || 'Gruplar çekilirken bir hata oluştu', 
+        variant: 'destructive' 
+      })
     } finally {
       setSyncing(false)
     }
@@ -206,35 +338,122 @@ export default function WaWebSessionPage() {
             <div className="bg-white p-4 rounded-lg shadow-lg mb-4">
               <img src={qrCode} alt="QR Code" className="w-64 h-64" />
             </div>
-            <p className="text-sm text-muted-foreground text-center max-w-md">
+            <p className="text-sm text-muted-foreground text-center max-w-md mb-4">
               WhatsApp uygulamanızı açın → <strong>Bağlı Cihazlar</strong> → 
               <strong>Cihaz Bağla</strong> ve bu QR kodu tarayın
+            </p>
+            <Button
+              onClick={handleConnect}
+              variant="outline"
+              size="sm"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Yenileniyor...
+                </>
+              ) : (
+                <>
+                  <QrCode className="w-4 h-4 mr-2" />
+                  QR Kodu Yenile
+                </>
+              )}
+            </Button>
+          </div>
+        )}
+
+        {/* QR Kod Bekleniyor */}
+        {!qrCode && !connected && loading && (
+          <div className="flex flex-col items-center py-6 border-t">
+            <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
+            <p className="text-sm text-muted-foreground text-center">
+              QR kodu oluşturuluyor... Lütfen bekleyin.
+            </p>
+            <p className="text-xs text-muted-foreground mt-2">
+              Chrome tarayıcısı açılacak, lütfen kapatmayın.
             </p>
           </div>
         )}
 
         {/* Bağlan Butonu */}
         {!connected && (
-          <Button 
-            onClick={handleConnect} 
-            disabled={loading}
-            className="w-full"
-            size="lg"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Bağlanıyor...
-              </>
-            ) : (
-              <>
-                <QrCode className="w-4 h-4 mr-2" />
-                Bağlan
-              </>
-            )}
-          </Button>
+          <div className="space-y-2">
+            <Button 
+              onClick={handleConnect} 
+              disabled={loading}
+              className="w-full"
+              size="lg"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Bağlanıyor...
+                </>
+              ) : (
+                <>
+                  <QrCode className="w-4 h-4 mr-2" />
+                  Bağlan
+                </>
+              )}
+            </Button>
+            <Button 
+              onClick={handleCleanupAndConnect} 
+              disabled={loading}
+              variant="outline"
+              className="w-full"
+              size="sm"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Temizleniyor...
+                </>
+              ) : (
+                <>
+                  <XCircle className="w-4 h-4 mr-2" />
+                  Temizle ve Yeniden Bağlan
+                </>
+              )}
+            </Button>
+            <p className="text-xs text-muted-foreground text-center mt-2">
+              Sorun yaşıyorsanız &quot;Temizle ve Yeniden Bağlan&quot; butonunu kullanın
+            </p>
+          </div>
         )}
       </Card>
+
+      {/* Bağlı Durumda Yeniden Bağlan Butonu */}
+      {connected && (
+        <Card className="p-6 mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold">Bağlantı Durumu</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Mesaj göndermede sorun yaşıyorsanız yeniden bağlanın
+              </p>
+            </div>
+            <Button 
+              onClick={handleCleanupAndConnect} 
+              disabled={loading}
+              variant="outline"
+              size="sm"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Temizleniyor...
+                </>
+              ) : (
+                <>
+                  <XCircle className="w-4 h-4 mr-2" />
+                  Temizle ve Yeniden Bağlan
+                </>
+              )}
+            </Button>
+          </div>
+        </Card>
+      )}
 
       {/* Mesaj Gönderme Kartı - Sadece bağlıyken göster */}
       {connected && (
@@ -276,7 +495,7 @@ export default function WaWebSessionPage() {
                 className="w-full mt-1 px-3 py-2 border rounded-md"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Resim, video veya dosya URL'si girin. WhatsApp'ta önizlemeli gözükecektir.
+                Resim, video veya dosya URL&apos;si girin. WhatsApp&apos;ta önizlemeli gözükecektir.
               </p>
             </div>
 

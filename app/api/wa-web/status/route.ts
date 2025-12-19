@@ -5,7 +5,14 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const { getStatus } = await import('@/lib/wa-web-service');
-    const status = getStatus();
+    const status = await getStatus();
+
+    console.log('[API] Status:', {
+      connected: status.connected,
+      hasQR: status.hasQR,
+      hasQrCode: !!status.qrCode,
+      phone: status.phone
+    });
 
     return NextResponse.json({
       success: true,

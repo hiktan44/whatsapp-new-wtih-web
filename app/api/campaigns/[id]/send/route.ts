@@ -48,8 +48,8 @@ export async function POST(
       }
     } else if (campaign.target_type === 'groups' && campaign.target_groups) {
       for (const groupId of campaign.target_groups) {
-        const { data: groupContacts } = await getGroupContacts(groupId);
-        if (groupContacts) recipients.push(...groupContacts);
+        const groupContacts = await getGroupContacts(groupId);
+        if (groupContacts && groupContacts.length > 0) recipients.push(...groupContacts);
       }
     } else if (campaign.target_type === 'manual' && campaign.target_manual_phones) {
       recipients = campaign.target_manual_phones.map(phone => ({
