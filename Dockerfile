@@ -102,4 +102,9 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
+# Container hazır olana kadar trafik alma (Coolify/Traefik için de faydalı)
+# /api/health 200 dönene kadar unhealthy kalır.
+HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=6 \
+  CMD curl -fsS "http://127.0.0.1:3000/api/health" >/dev/null || exit 1
+
 CMD ["node", "server.js"]
