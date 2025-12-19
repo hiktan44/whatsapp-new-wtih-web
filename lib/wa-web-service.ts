@@ -2,6 +2,14 @@ import QRCode from 'qrcode';
 import * as fs from 'fs';
 import * as path from 'path';
 
+// Global type definitions for WhatsApp Web
+declare global {
+  var waClient: any;
+  var waIsReady: boolean;
+  var waQrCode: string | null;
+  var waInitializing: boolean;
+}
+
 // whatsapp-web.js dynamic import
 let Client: any;
 let LocalAuth: any;
