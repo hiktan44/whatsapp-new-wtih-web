@@ -12,6 +12,7 @@ import {
   Clock,
   History,
   Settings,
+  LogOut,
   Menu,
   X,
   Smartphone,
@@ -19,6 +20,7 @@ import {
   BarChart3,
 } from 'lucide-react'
 import { useState } from 'react'
+import { useToast } from '@/components/ui/use-toast'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const menuItems = [
@@ -30,7 +32,6 @@ const menuItems = [
   { href: '/dashboard/kuyruk', label: 'Kuyruk', icon: Clock },
   { href: '/dashboard/gecmis', label: 'Geçmiş', icon: History },
   { href: '/dashboard/wa-web-session', label: 'WA Web Oturumu', icon: Smartphone },
-  { href: '/dashboard/coklu-session', label: 'Çoklu WhatsApp', icon: Smartphone, badge: 'YENİ' },
   { href: '/dashboard/campaigns', label: 'Kampanyalar', icon: Zap },
   { href: '/dashboard/reports', label: 'Raporlar', icon: BarChart3 },
   { href: '/dashboard/ayarlar', label: 'Ayarlar', icon: Settings },
@@ -38,7 +39,26 @@ const menuItems = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+  const { toast } = useToast()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+      toast({
+        title: 'Çıkış yapıldı',
+        description: 'Başarıyla çıkış yaptınız.',
+      })
+      router.push('/login')
+    } catch (error) {
+      toast({
+        title: 'Hata',
+        description: 'Çıkış yapılırken bir hata oluştu.',
+        variant: 'destructive',
+      })
+    }
+  }
 
   return (
     <>
@@ -90,7 +110,7 @@ export function Sidebar() {
                 </svg>
               </div>
               <div>
-                <h1 className="text-lg font-bold">Yoncu Panel</h1>
+                <h1 className="text-lg font-bold">HT Panel</h1>
                 <p className="text-xs text-muted-foreground">WhatsApp Yönetimi</p>
               </div>
             </Link>
@@ -115,17 +135,22 @@ export function Sidebar() {
                 >
                   <Icon size={20} />
                   <span className="font-medium">{item.label}</span>
-                  {(item as any).badge && (
-                    <span className="ml-auto text-xs px-2 py-0.5 bg-green-500 text-white rounded-full">
-                      {(item as any).badge}
-                    </span>
-                  )}
                 </Link>
               )
             })}
           </nav>
 
-          {/* Login kaldırıldı: Çıkış butonu kaldırıldı */}
+          {/* Logout Button */}
+          <div className="p-4 border-t border-border">
+            <Button
+              onClick={handleLogout}
+              variant="ghost"
+              className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+            >
+              <LogOut size={20} className="mr-3" />
+              Çıkış Yap
+            </Button>
+          </div>
         </div>
       </aside>
     </>
