@@ -18,6 +18,9 @@ import {
   Smartphone,
   Zap,
   BarChart3,
+  Phone,
+  User,
+  Crown,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useToast } from '@/components/ui/use-toast'
@@ -27,6 +30,8 @@ const menuItems = [
   { href: '/dashboard', label: 'Gösterge Paneli', icon: Menu },
   { href: '/dashboard/kisiler', label: 'Kişiler', icon: Users },
   { href: '/dashboard/gruplar', label: 'Gruplar', icon: Users2 },
+  { href: '/dashboard/wa-contacts', label: 'WA Kişileri', icon: Phone },
+  { href: '/dashboard/wa-groups', label: 'WA Grupları', icon: Crown },
   { href: '/dashboard/sablonlar', label: 'Şablonlar', icon: FileText },
   { href: '/dashboard/mesaj-gonder', label: 'Mesaj Gönder', icon: Send },
   { href: '/dashboard/kuyruk', label: 'Kuyruk', icon: Clock },

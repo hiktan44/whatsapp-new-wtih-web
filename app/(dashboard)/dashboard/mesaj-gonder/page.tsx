@@ -36,11 +36,15 @@ export default function SendMessagePage() {
   const [channel, setChannel] = useState<SendChannel>('wa-web')
   const [contacts, setContacts] = useState<Contact[]>([])
   const [groups, setGroups] = useState<Group[]>([])
+  const [waContacts, setWaContacts] = useState<any[]>([])
+  const [waGroups, setWaGroups] = useState<any[]>([])
   const [templates, setTemplates] = useState<Template[]>([])
   const [selectedContact, setSelectedContact] = useState('')
   const [selectedContacts, setSelectedContacts] = useState<string[]>([])
   const [selectedGroup, setSelectedGroup] = useState('none')
+  const [selectedWaGroup, setSelectedWaGroup] = useState('none')
   const [selectedTemplate, setSelectedTemplate] = useState('')
+  const [contactSource, setContactSource] = useState<'manual' | 'whatsapp'>('manual')
   const [customPhone, setCustomPhone] = useState('')
   const [message, setMessage] = useState('')
   const [bulkPhones, setBulkPhones] = useState('')
@@ -116,6 +120,8 @@ export default function SendMessagePage() {
     fetchContacts()
     fetchTemplates()
     fetchGroups()
+    fetchWAContacts()
+    fetchWAGroups()
     fetchSessions()
   }, [])
   
@@ -171,6 +177,34 @@ export default function SendMessagePage() {
       }
     } catch (error) {
       console.error('Fetch templates error:', error)
+    }
+  }
+
+  const fetchWAContacts = async () => {
+    try {
+      const response = await fetch('/api/wa-web/contacts')
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          setWaContacts(data.contacts)
+        }
+      }
+    } catch (error) {
+      console.error('Fetch WA contacts error:', error)
+    }
+  }
+
+  const fetchWAGroups = async () => {
+    try {
+      const response = await fetch('/api/wa-web/groups')
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          setWaGroups(data.groups)
+        }
+      }
+    } catch (error) {
+      console.error('Fetch WA groups error:', error)
     }
   }
 
@@ -532,15 +566,28 @@ export default function SendMessagePage() {
     let company = ''
 
     if (selectedContact) {
-      const contact = contacts.find((c) => c.id === selectedContact)
-      if (contact) {
-        phone = contact.phone
-        contactName = `${contact.name} ${contact.surname}`
-        firstName = contact.name
-        lastName = contact.surname
-        email = contact.email || ''
-        address = contact.address || ''
-        company = contact.company || ''
+      if (contactSource === 'manual') {
+        const contact = contacts.find((c) => c.id === selectedContact)
+        if (contact) {
+          phone = contact.phone
+          contactName = `${contact.name} ${contact.surname}`
+          firstName = contact.name
+          lastName = contact.surname
+          email = contact.email || ''
+          address = contact.address || ''
+          company = contact.company || ''
+        }
+      } else {
+        const contact = waContacts.find((c) => c.id === selectedContact)
+        if (contact) {
+          phone = contact.phone
+          contactName = contact.name
+          firstName = contact.name
+          lastName = ''
+          email = ''
+          address = ''
+          company = ''
+        }
       }
     } else if (customPhone) {
       phone = formatPhoneNumber(customPhone)
@@ -653,6 +700,9 @@ export default function SendMessagePage() {
     if (selectedGroup && selectedGroup !== 'none') {
       const group = groups.find(g => g.id === selectedGroup)
       total = group?.contact_count || 0
+    } else if (selectedWaGroup && selectedWaGroup !== 'none') {
+      const group = waGroups.find(g => g.id === selectedWaGroup)
+      total = 1 // WhatsApp grubu tekil olarak sayılır
     } else {
       total = selectedContacts.length
     }
@@ -709,8 +759,24 @@ export default function SendMessagePage() {
       company: string;
     }> = []
 
-    // From selected group (grup seçildiyse, grubun kişilerini al)
-    if (selectedGroup && selectedGroup !== 'none') {
+    // From selected WhatsApp group (WhatsApp grubu seçildiyse)
+    if (selectedWaGroup && selectedWaGroup !== 'none') {
+      const group = waGroups.find(g => g.id === selectedWaGroup)
+      if (group) {
+        // WhatsApp grup ID'sini kullanarak direkt gönder
+        phonesToSend = [{
+          phone: group.id, // WhatsApp grup ID'si
+          name: group.name,
+          surname: '',
+          email: '',
+          address: '',
+          company: '',
+          isGroup: true // Grup olduğunu belirt
+        }]
+      }
+    }
+    // From selected manual group (manuel grup seçildiyse, grubun kişilerini al)
+    else if (selectedGroup && selectedGroup !== 'none') {
       try {
         const response = await fetch(`/api/groups/${selectedGroup}/contacts`)
         if (response.ok) {
@@ -866,7 +932,10 @@ export default function SendMessagePage() {
         }
       }
 
-      const { phone, name, surname, email, address, company } = phonesToSendInRange[i]
+      const { phone, name, surname, email, address, company, isGroup } = phonesToSendInRange[i]
+
+      // WhatsApp grubuysa formatlama
+      const finalPhone = isGroup ? phone : formatPhoneNumber(phone)
       
       // Session seçimi (paralel gönderim için round-robin)
       let sessionToUse = 'default'
@@ -879,12 +948,12 @@ export default function SendMessagePage() {
       }
       
       // Progress güncelle (hangi numaraya gönderiliyor)
-      setProgress({ 
-        current: i + 1, 
-        total: totalToSend, 
-        successCount, 
+      setProgress({
+        current: i + 1,
+        total: totalToSend,
+        successCount,
         failCount,
-        currentPhone: phone + sessionDisplay
+        currentPhone: finalPhone + sessionDisplay
       })
       
       // Mesajı hazırla
@@ -910,7 +979,7 @@ export default function SendMessagePage() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              phone,
+              phone: finalPhone,
               message: finalMessage,
               mediaItems: mediaItems.map(m => ({
                 type: m.type,
@@ -922,13 +991,13 @@ export default function SendMessagePage() {
               sessionName: sessionToUse
             })
           })
-          
+
           if (!response.ok) throw new Error('Gönderim başarısız')
         } else {
           // Yoncu API veya tek medya
           await sendSingleMessage(
-            phone, 
-            finalMessage, 
+            finalPhone,
+            finalMessage,
             name !== 'Değerli Müşterimiz' ? name : undefined,
             mediaItems[0] || undefined,
             sessionToUse
@@ -941,9 +1010,9 @@ export default function SendMessagePage() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              phone,
+              phone: finalPhone,
               message: finalMessage,
-              contact_name: name !== 'Değerli Müşterimiz' ? `${name} ${surname}`.trim() : undefined,
+              contact_name: isGroup ? name : (name !== 'Değerli Müşterimiz' ? `${name} ${surname}`.trim() : undefined),
               status: 'sent',
               channel: channel === 'wa-web' ? 'whatsapp-web' : 'yoncu'
             })
@@ -1053,9 +1122,9 @@ export default function SendMessagePage() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              phone,
+              phone: finalPhone,
               message: finalMessage,
-              contact_name: name !== 'Değerli Müşterimiz' ? `${name} ${surname}`.trim() : undefined,
+              contact_name: isGroup ? name : (name !== 'Değerli Müşterimiz' ? `${name} ${surname}`.trim() : undefined),
               status: 'failed',
               channel: channel === 'wa-web' ? 'whatsapp-web' : 'yoncu',
               error: error instanceof Error ? error.message : 'Bilinmeyen hata'
@@ -1263,22 +1332,79 @@ export default function SendMessagePage() {
             <CardHeader>
               <CardTitle>Alıcı Bilgileri</CardTitle>
               <CardDescription>
-                Kayıtlı bir kişi seçin veya telefon numarası girin
+                Kişi kaynağı seçin, kayıtlı bir kişi seçin veya telefon numarası girin
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Kişi Kaynağı Seçimi */}
               <div className="space-y-2">
-                <Label>Kayıtlı Kişi Seç</Label>
+                <Label>Kişi Kaynağı</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setContactSource('manual')
+                      setSelectedContact('')
+                    }}
+                    className={`p-3 rounded-lg border-2 transition-all ${
+                      contactSource === 'manual'
+                        ? 'border-primary bg-primary/10'
+                        : 'border-muted hover:border-primary/50'
+                    }`}
+                  >
+                    <div className="text-center">
+                      <Users className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+                      <p className="text-sm font-medium">Manuel Kişiler</p>
+                      <p className="text-xs text-muted-foreground">
+                        {contacts.length} kişi
+                      </p>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setContactSource('whatsapp')
+                      setSelectedContact('')
+                    }}
+                    className={`p-3 rounded-lg border-2 transition-all ${
+                      contactSource === 'whatsapp'
+                        ? 'border-primary bg-primary/10'
+                        : 'border-muted hover:border-primary/50'
+                    }`}
+                  >
+                    <div className="text-center">
+                      <Smartphone className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+                      <p className="text-sm font-medium">WhatsApp Kişileri</p>
+                      <p className="text-xs text-muted-foreground">
+                        {waContacts.length} kişi
+                      </p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Kişi Seçimi */}
+              <div className="space-y-2">
+                <Label>
+                  {contactSource === 'manual' ? 'Manuel Kişi Seç' : 'WhatsApp Kişisi Seç'}
+                </Label>
                 <Select value={selectedContact} onValueChange={setSelectedContact}>
                   <SelectTrigger>
                     <SelectValue placeholder="Kişi seçin..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {contacts.map((contact) => (
-                      <SelectItem key={contact.id} value={contact.id}>
-                        {contact.name} {contact.surname} - {contact.phone}
-                      </SelectItem>
-                    ))}
+                    {contactSource === 'manual'
+                      ? contacts.map((contact) => (
+                          <SelectItem key={contact.id} value={contact.id}>
+                            {contact.name} {contact.surname} - {contact.phone}
+                          </SelectItem>
+                        ))
+                      : waContacts.map((contact) => (
+                          <SelectItem key={contact.id} value={contact.id}>
+                            {contact.name} - {contact.phone}
+                          </SelectItem>
+                        ))
+                    }
                   </SelectContent>
                 </Select>
               </div>
@@ -1544,11 +1670,11 @@ export default function SendMessagePage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Grup Seçimi */}
+              {/* Manuel Grup Seçimi */}
               {groups.length > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label>Grup Seç</Label>
+                    <Label>Manuel Grup Seç</Label>
                     {selectedGroup && selectedGroup !== 'none' && (
                       <Button
                         type="button"
@@ -1564,7 +1690,7 @@ export default function SendMessagePage() {
                   </div>
                   <Select value={selectedGroup} onValueChange={handleGroupSelect}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Grup seçin..." />
+                      <SelectValue placeholder="Manuel grup seçin..." />
                     </SelectTrigger>
                     <SelectContent>
                       {groups.map((group) => (
@@ -1577,6 +1703,44 @@ export default function SendMessagePage() {
                   {selectedGroup && selectedGroup !== 'none' && (
                     <p className="text-xs text-muted-foreground">
                       ✅ Seçilen grubun tüm kişileri otomatik olarak eklendi
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* WhatsApp Grup Seçimi */}
+              {waGroups.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>WhatsApp Grup Seç</Label>
+                    {selectedWaGroup && selectedWaGroup !== 'none' && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedWaGroup('none')}
+                        className="h-auto py-1 px-2 text-xs"
+                      >
+                        <X className="h-3 w-3 mr-1" />
+                        WA Grup Seçimini Kaldır
+                      </Button>
+                    )}
+                  </div>
+                  <Select value={selectedWaGroup} onValueChange={setSelectedWaGroup}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="WhatsApp grubu seçin..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {waGroups.map((group) => (
+                        <SelectItem key={group.id} value={group.id}>
+                          {group.name} ({group.participantCount || 0} üye)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedWaGroup && selectedWaGroup !== 'none' && (
+                    <p className="text-xs text-muted-foreground">
+                      ✅ WhatsApp grubu seçildi - mesaj gruba gönderilecek
                     </p>
                   )}
                 </div>

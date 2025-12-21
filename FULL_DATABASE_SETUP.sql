@@ -99,6 +99,46 @@ CREATE TABLE IF NOT EXISTS wa_web_sessions (
   CONSTRAINT wa_web_sessions_session_name_key UNIQUE (session_name)
 );
 
+-- WhatsApp Contacts (WhatsApp'tan çekilen kişiler)
+CREATE TABLE IF NOT EXISTS wa_contacts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  wa_id TEXT UNIQUE NOT NULL, -- WhatsApp ID (serialized)
+  name TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  is_business BOOLEAN DEFAULT false,
+  profile_pic_url TEXT,
+  last_sync_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- WhatsApp Groups (WhatsApp'tan çekilen gruplar)
+CREATE TABLE IF NOT EXISTS wa_groups (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  wa_id TEXT UNIQUE NOT NULL, -- WhatsApp Group ID (serialized)
+  name TEXT NOT NULL,
+  description TEXT,
+  participant_count INTEGER DEFAULT 0,
+  is_announcement_group BOOLEAN DEFAULT false,
+  profile_pic_url TEXT,
+  last_sync_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- WhatsApp Group Members (Grup üyeleri)
+CREATE TABLE IF NOT EXISTS wa_group_members (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  group_id UUID REFERENCES wa_groups(id) ON DELETE CASCADE,
+  wa_id TEXT NOT NULL, -- WhatsApp User ID (serialized)
+  name TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  is_admin BOOLEAN DEFAULT false,
+  is_super_admin BOOLEAN DEFAULT false,
+  joined_at TIMESTAMP WITH TIME ZONE,
+  last_sync_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(group_id, wa_id)
+);
+
 -- Campaigns (Toplu Gönderim Kampanyaları)
 CREATE TABLE IF NOT EXISTS campaigns (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -212,6 +252,18 @@ CREATE INDEX IF NOT EXISTS idx_group_contacts_contact_id ON group_contacts(conta
 CREATE INDEX IF NOT EXISTS idx_wa_web_sessions_status ON wa_web_sessions(status);
 CREATE INDEX IF NOT EXISTS idx_wa_web_sessions_session_name ON wa_web_sessions(session_name);
 
+CREATE INDEX IF NOT EXISTS idx_wa_contacts_wa_id ON wa_contacts(wa_id);
+CREATE INDEX IF NOT EXISTS idx_wa_contacts_phone ON wa_contacts(phone);
+CREATE INDEX IF NOT EXISTS idx_wa_contacts_last_sync ON wa_contacts(last_sync_at);
+
+CREATE INDEX IF NOT EXISTS idx_wa_groups_wa_id ON wa_groups(wa_id);
+CREATE INDEX IF NOT EXISTS idx_wa_groups_participant_count ON wa_groups(participant_count);
+CREATE INDEX IF NOT EXISTS idx_wa_groups_last_sync ON wa_groups(last_sync_at);
+
+CREATE INDEX IF NOT EXISTS idx_wa_group_members_group_id ON wa_group_members(group_id);
+CREATE INDEX IF NOT EXISTS idx_wa_group_members_wa_id ON wa_group_members(wa_id);
+CREATE INDEX IF NOT EXISTS idx_wa_group_members_is_admin ON wa_group_members(is_admin);
+
 CREATE INDEX IF NOT EXISTS idx_campaigns_status ON campaigns(status);
 CREATE INDEX IF NOT EXISTS idx_campaigns_channel ON campaigns(channel);
 
@@ -272,6 +324,9 @@ ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE groups ENABLE ROW LEVEL SECURITY;
 ALTER TABLE group_contacts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE wa_web_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE wa_contacts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE wa_groups ENABLE ROW LEVEL SECURITY;
+ALTER TABLE wa_group_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE campaigns ENABLE ROW LEVEL SECURITY;
 ALTER TABLE send_jobs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE blacklist ENABLE ROW LEVEL SECURITY;
@@ -287,6 +342,9 @@ CREATE POLICY "Enable all operations" ON settings FOR ALL USING (true);
 CREATE POLICY "Enable all operations" ON groups FOR ALL USING (true);
 CREATE POLICY "Enable all operations" ON group_contacts FOR ALL USING (true);
 CREATE POLICY "Enable all operations" ON wa_web_sessions FOR ALL USING (true);
+CREATE POLICY "Enable all operations" ON wa_contacts FOR ALL USING (true);
+CREATE POLICY "Enable all operations" ON wa_groups FOR ALL USING (true);
+CREATE POLICY "Enable all operations" ON wa_group_members FOR ALL USING (true);
 CREATE POLICY "Enable all operations" ON campaigns FOR ALL USING (true);
 CREATE POLICY "Enable all operations" ON send_jobs FOR ALL USING (true);
 CREATE POLICY "Enable all operations" ON blacklist FOR ALL USING (true);
