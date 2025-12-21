@@ -1,4 +1,4 @@
-import { createAdminSupabaseClient } from './supabase-admin'
+import { supabase } from './supabase'
 
 const BUCKET_NAME = 'whatsapp-media'
 
@@ -23,8 +23,6 @@ export async function uploadFile(
   path?: string
 ): Promise<{ url: string; path: string; type: 'image' | 'video' | 'document' | 'audio' }> {
   try {
-    const supabase = createAdminSupabaseClient()
-
     // Benzersiz dosya adı oluştur
     const timestamp = Date.now()
     const randomString = Math.random().toString(36).substring(7)
@@ -60,7 +58,6 @@ export async function uploadFile(
 // Dosyayı sil
 export async function deleteFile(path: string): Promise<void> {
   try {
-    const supabase = createAdminSupabaseClient()
     const { error } = await supabase.storage
       .from(BUCKET_NAME)
       .remove([path])
@@ -73,7 +70,6 @@ export async function deleteFile(path: string): Promise<void> {
 
 // Public URL al
 export function getPublicUrl(path: string): string {
-  const supabase = createAdminSupabaseClient()
   const { data } = supabase.storage.from(BUCKET_NAME).getPublicUrl(path)
   return data.publicUrl
 }

@@ -7,10 +7,6 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Puppeteer'ın Chromium indirmesini atla (sistem Chromium kullanacağız)
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-ENV PUPPETEER_SKIP_DOWNLOAD=true
-
 # Install dependencies based on the preferred package manager
 COPY package.json package-lock.json* ./
 RUN npm ci
@@ -20,16 +16,6 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-
-# Repo'da public/ klasörü yoksa sonraki stage'deki COPY patlıyor.
-# Bu yüzden public dizinini her zaman oluşturuyoruz (boş olabilir).
-RUN mkdir -p /app/public
-
-# Build arguments for environment variables
-ARG NEXT_PUBLIC_SUPABASE_URL
-ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
-ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
-ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 # Puppeteer için gerekli bağımlılıklar (build için minimal)
 RUN apk add --no-cache \
@@ -101,10 +87,5 @@ EXPOSE 3000
 
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
-
-# Container hazır olana kadar trafik alma (Coolify/Traefik için de faydalı)
-# /api/health 200 dönene kadar unhealthy kalır.
-HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=6 \
-  CMD curl -fsS "http://127.0.0.1:3000/api/health" >/dev/null || exit 1
 
 CMD ["node", "server.js"]

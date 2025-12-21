@@ -201,11 +201,11 @@ export default function SettingsPage() {
         setUsername('')
         setPassword('')
 
-        // Login kaldırıldı: kullanıcı adı değiştiyse sayfayı yenilemek yeterli.
+        // If username changed, user will need to login again
         if (username) {
           setTimeout(() => {
-            window.location.reload()
-          }, 1000)
+            window.location.href = '/login'
+          }, 2000)
         }
       } else {
         throw new Error('Güncelleme başarısız')
